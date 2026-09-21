@@ -1,10 +1,10 @@
 import os, sys, json, time
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtWidgets import (
+from PySide2.QtCore import Qt, QTimer
+from PySide2.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QListWidget, QListWidgetItem,
-    QFileDialog, QStyle, QFrame, QSizePolicy
+    QFileDialog, QStyle, QFrame, QSizePolicy,
+    QAction, QActionGroup
 )
 
 try:
@@ -638,4 +638,4 @@ if __name__ == "__main__":
     app.setStyleSheet(DARK_QSS)
     win = PlayerWindow()
     win.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
