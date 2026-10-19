@@ -1,10 +1,11 @@
+
 import os, sys, json, time, argparse, subprocess
-from PySide6.QtCore import Qt, QTimer, Signal, QSettings
-from PySide6.QtGui import QAction, QActionGroup, QCursor
-from PySide6.QtWidgets import (
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QSettings
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QListWidget, QListWidgetItem,
-    QFileDialog, QStyle, QFrame, QSizePolicy
+    QFileDialog, QStyle, QFrame, QSizePolicy, QAction, QActionGroup
 )
 
 try:
@@ -374,7 +375,7 @@ QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
 
 
 class VideoWidget(QWidget):
-    resized = Signal()
+    resized = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -457,7 +458,8 @@ class PlayerWindow(QMainWindow):
         self.video.resized.connect(self._schedule_scale_reapply)
         root.addWidget(self.video, stretch=1)
 
-        transport = QFrame(objectName="Transport")
+        transport = QFrame()
+        transport.setObjectName("Transport")
         self.transport = transport
         root.addWidget(transport)
         t = QHBoxLayout(transport)
@@ -466,22 +468,26 @@ class PlayerWindow(QMainWindow):
 
         style = self.style()
 
-        self.play_btn = QPushButton(objectName="PlayButton")
+        self.play_btn = QPushButton()
+        self.play_btn.setObjectName("PlayButton")
         self.play_btn.setIcon(style.standardIcon(QStyle.SP_MediaPlay))
         self.play_btn.clicked.connect(self.toggle_play)
         t.addWidget(self.play_btn)
 
-        self.back_btn = QPushButton(objectName="IconButton")
+        self.back_btn = QPushButton()
+        self.back_btn.setObjectName("IconButton")
         self.back_btn.setIcon(style.standardIcon(QStyle.SP_MediaSkipBackward))
         self.back_btn.clicked.connect(lambda: self.seek_relative(-self.skip_interval_ms))
         t.addWidget(self.back_btn)
 
-        self.fwd_btn = QPushButton(objectName="IconButton")
+        self.fwd_btn = QPushButton()
+        self.fwd_btn.setObjectName("IconButton")
         self.fwd_btn.setIcon(style.standardIcon(QStyle.SP_MediaSkipForward))
         self.fwd_btn.clicked.connect(lambda: self.seek_relative(+self.skip_interval_ms))
         t.addWidget(self.fwd_btn)
 
-        self.time_label = QLabel("0:00:00 / 0:00:00", objectName="TimeLabel")
+        self.time_label = QLabel("0:00:00 / 0:00:00")
+        self.time_label.setObjectName("TimeLabel")
         self.time_label.setAlignment(Qt.AlignCenter)
         t.addWidget(self.time_label)
 
@@ -490,18 +496,21 @@ class PlayerWindow(QMainWindow):
         self.progress.sliderMoved.connect(self.on_seek)
         t.addWidget(self.progress, stretch=1)
 
-        self.scale_btn = QPushButton(objectName="IconButton")
+        self.scale_btn = QPushButton()
+        self.scale_btn.setObjectName("IconButton")
         self.scale_btn.setToolTip("Cycle scaling mode (V)")
         self.scale_btn.setText("⤢")
         self.scale_btn.clicked.connect(self.cycle_scale_mode)
         t.addWidget(self.scale_btn)
 
-        self.fullscreen_btn = QPushButton(objectName="IconButton")
+        self.fullscreen_btn = QPushButton()
+        self.fullscreen_btn.setObjectName("IconButton")
         self.fullscreen_btn.setText("⛶")
         self.fullscreen_btn.clicked.connect(self.toggle_fullscreen)
         t.addWidget(self.fullscreen_btn)
 
-        self.header = QLabel("PLAYLIST", objectName="Header")
+        self.header = QLabel("PLAYLIST")
+        self.header.setObjectName("Header")
         root.addWidget(self.header)
 
         self.playlist = QListWidget()
@@ -535,7 +544,8 @@ class PlayerWindow(QMainWindow):
         self._scale_group.setExclusive(True)
         self._scale_actions = {}
         for mode in SCALE_MODES:
-            act = QAction(SCALE_MODE_LABELS[mode], self, checkable=True)
+            act = QAction(SCALE_MODE_LABELS[mode], self)
+            act.setCheckable(True)
             act.setChecked(mode == self.scale_mode)
             act.triggered.connect(lambda _=False, m=mode: self.set_scale_mode(m))
             self._scale_group.addAction(act)
@@ -694,7 +704,8 @@ class PlayerWindow(QMainWindow):
         self._preset_actions = {}
 
         for key, profile in PRESET_PROFILES.items():
-            act = QAction(profile["label"], self, checkable=True)
+            act = QAction(profile["label"], self)
+            act.setCheckable(True)
             act.setChecked(key == self.preset)
             act.setToolTip(profile.get("description", ""))
             act.triggered.connect(lambda _=False, k=key: self.set_preset(k))
@@ -704,7 +715,8 @@ class PlayerWindow(QMainWindow):
 
         menu.addSeparator()
 
-        custom_act = QAction("Custom (individual overrides)", self, checkable=True)
+        custom_act = QAction("Custom (individual overrides)", self)
+        custom_act.setCheckable(True)
         custom_act.setChecked(self.preset == "custom")
         custom_act.triggered.connect(lambda: self.set_preset("custom"))
         self._preset_group.addAction(custom_act)
@@ -719,7 +731,8 @@ class PlayerWindow(QMainWindow):
         for sigma, label in [(0.0, "Off"), (0.06, "Subtle (0.06)"),
                              (0.10, "Light (0.10)"), (0.16, "Medium (0.16)"),
                              (0.22, "Strong (0.22)")]:
-            a = QAction(label, self, checkable=True)
+            a = QAction(label, self)
+            a.setCheckable(True)
             a.setChecked(abs(self.custom_filters.get("sharpen_sigma", -1) - sigma) < 0.001)
             a.triggered.connect(lambda _=False, s=sigma: self.set_custom_filter("sharpen_sigma", s))
             sub_sharpen.addAction(a)
@@ -729,7 +742,8 @@ class PlayerWindow(QMainWindow):
                             ("Mild", (3, 2, 3, 2)),
                             ("Medium", (6, 4, 8, 6)),
                             ("Strong", (10, 8, 12, 10))]:
-            a = QAction(label, self, checkable=True)
+            a = QAction(label, self)
+            a.setCheckable(True)
             a.triggered.connect(
                 lambda _=False, v=vals: self._set_denoise_level(v))
             sub_denoise.addAction(a)
@@ -838,7 +852,8 @@ class PlayerWindow(QMainWindow):
         self._hw_group.setExclusive(True)
         self._hw_actions = {}
         for key in ("auto", "disabled", "force"):
-            act = QAction(HW_ACCEL_LABELS[key], self, checkable=True)
+            act = QAction(HW_ACCEL_LABELS[key], self)
+            act.setCheckable(True)
             act.setChecked(key == self.hw_accel)
             act.triggered.connect(lambda _=False, k=key: self.set_hw_accel(k))
             self._hw_group.addAction(act)
@@ -847,7 +862,8 @@ class PlayerWindow(QMainWindow):
         tools.addSeparator()
 
         fs_menu = tools.addMenu("Fullscreen")
-        self._autohide_action = QAction("Auto-hide controls", self, checkable=True)
+        self._autohide_action = QAction("Auto-hide controls", self)
+        self._autohide_action.setCheckable(True)
         self._autohide_action.setChecked(self.autohide_controls)
         self._autohide_action.toggled.connect(self.set_autohide)
         fs_menu.addAction(self._autohide_action)
@@ -858,7 +874,8 @@ class PlayerWindow(QMainWindow):
         self._delay_actions = {}
         for ms in HIDE_CHOICES_MS:
             label = "Never" if ms == 0 else f"{ms/1000:g} seconds"
-            act = QAction(label, self, checkable=True)
+            act = QAction(label, self)
+            act.setCheckable(True)
             act.setChecked(ms == self.hide_delay_ms)
             act.triggered.connect(lambda _=False, v=ms: self.set_hide_delay(v))
             self._delay_group.addAction(act)
@@ -871,7 +888,8 @@ class PlayerWindow(QMainWindow):
         self._skip_group.setExclusive(True)
         self._skip_actions = {}
         for ms in SKIP_CHOICES_MS:
-            act = QAction(f"{ms//1000} seconds", self, checkable=True)
+            act = QAction(f"{ms//1000} seconds", self)
+            act.setCheckable(True)
             act.setChecked(ms == self.skip_interval_ms)
             act.triggered.connect(lambda _=False, v=ms: self.set_skip_interval(v))
             self._skip_group.addAction(act)
@@ -879,12 +897,14 @@ class PlayerWindow(QMainWindow):
             self._skip_actions[ms] = act
         tools.addSeparator()
 
-        self._remember_action = QAction("Remember playback progress", self, checkable=True)
+        self._remember_action = QAction("Remember playback progress", self)
+        self._remember_action.setCheckable(True)
         self._remember_action.setChecked(self.resume_enabled)
         self._remember_action.toggled.connect(self.set_remember_progress)
         tools.addAction(self._remember_action)
 
-        self._verbose_action = QAction("Verbose logging", self, checkable=True)
+        self._verbose_action = QAction("Verbose logging", self)
+        self._verbose_action.setCheckable(True)
         self._verbose_action.setChecked(bool(get_setting("verbose")))
         self._verbose_action.toggled.connect(self.set_verbose)
         tools.addAction(self._verbose_action)
@@ -1316,7 +1336,8 @@ class PlayerWindow(QMainWindow):
             for tid, raw in descs:
                 name = tname(raw)
                 label = "Disable" if tid == -1 else (name or f"Track {tid}")
-                act = QAction(label, self, checkable=True)
+                act = QAction(label, self)
+                act.setCheckable(True)
                 act.setChecked(tid == current_a)
                 act.triggered.connect(
                     lambda _=False, t=tid, n=name: self.set_audio_track(t, n))
@@ -1340,7 +1361,8 @@ class PlayerWindow(QMainWindow):
             for sid, raw in subs:
                 name = tname(raw)
                 label = "Disable" if sid == -1 else (name or f"Subtitle {sid}")
-                act = QAction(label, self, checkable=True)
+                act = QAction(label, self)
+                act.setCheckable(True)
                 act.setChecked(sid == current_s)
                 act.triggered.connect(
                     lambda _=False, s=sid, n=name: self.set_sub_track(s, n))
@@ -1487,7 +1509,7 @@ def parse_args(argv):
                    help="Wipe all saved preferences and exit. Use this if a "
                         "bad filter combination prevents normal startup.")
     p.add_argument("--version", action="version",
-                   version="ReMeMVideoPlayer 3.2")
+                   version="ReMeMVideoPlayer 3.2 (PyQt5 / 32-bit capable)")
     return p.parse_args(argv)
 
 
@@ -1548,8 +1570,11 @@ def main(argv=None):
                 print(f"warning: --play target not found: {args.play}",
                       file=sys.stderr)
 
-    # Qt 6 enables high-DPI scaling by default; the old AA_EnableHighDpiScaling
-    # and AA_UseHighDpiPixmaps attributes are deprecated and have no effect.
+    # PyQt5 is Qt 5 — high-DPI scaling must be requested explicitly, and the
+    # attributes must be set before the QApplication is constructed.
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     app.setStyleSheet(DARK_QSS)
@@ -1563,7 +1588,7 @@ def main(argv=None):
     )
     win.show()
     QTimer.singleShot(50, lambda: win.begin(fullscreen=args.fullscreen))
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":

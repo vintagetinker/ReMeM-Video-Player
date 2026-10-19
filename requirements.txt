@@ -1,0 +1,31 @@
+# ═══════════════════════════════════════════════════════════════════════
+# ReMeMVideoPlayer — Python dependencies
+#
+# Target environment:
+#   * Python 3.8.x (32-bit)   ← last Python that runs on Windows 7 SP1
+#   * VLC 3.0.x (32-bit)      ← must match the Python architecture
+#
+# Install with:
+#   python -m pip install -r requirements.txt
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── Runtime dependencies ───────────────────────────────────────────────
+
+# Qt 5 GUI toolkit. Ships 32-bit (win32) wheels for Python 3.8.
+# 5.15 is the last Qt 5 line; <5.16 keeps us off PyQt6 by accident.
+PyQt5>=5.15.4,<5.16
+
+# VLC Python bindings. Pure-Python package — no compiled bits — so it
+# works on any architecture. It loads libvlc.dll at runtime, which is why
+# the installed VLC Media Player must be 32-bit to match a 32-bit Python.
+python-vlc>=3.0.18122
+
+# Used only by convert_icon.py to (re)generate icon.ico from icon.jpg.
+# Not imported by the player itself — safe to skip if you already have
+# icon.ico checked in. Pillow 10.4 dropped Python 3.8 support.
+Pillow>=9.5.0,<10.4
+
+# ── Build-only dependency ──────────────────────────────────────────────
+# Only needed to produce dist/ReMeMVideoPlayer.exe via PyInstaller.
+# PyInstaller 6.11 dropped Python 3.8 — stay below that.
+pyinstaller>=6.0,<6.11
