@@ -1,0 +1,3 @@
+([('ReMeMVideoPlayer',
+   '/Users/alee/Documents/GitHub/ReMeM-Video-Player/dist/ReMeMVideoPlayer',
+   'EXECUTABLE')],)
